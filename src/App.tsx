@@ -1,45 +1,113 @@
+import { useState } from "react";
 import { defaultSearchProfile } from "./data/default-search-profile";
 import { preparedPrototypeLocations } from "./data/locations";
-import { CriteriaSummary } from "./features/criteria/CriteriaSummary";
+import { CriteriaPanel } from "./features/criteria/CriteriaPanel";
+import {
+  changeConstraintType,
+  changePriority,
+  changeRange,
+  changeThreshold,
+  copySearchProfile,
+} from "./features/criteria/update-search-profile";
+import { LocationDetails } from "./features/location-details/LocationDetails";
 import { ExcludedLocations } from "./features/matches/ExcludedLocations";
 import { rankLocations } from "./features/matches/rank-locations";
 import { TopMatches } from "./features/matches/TopMatches";
-
-const locationRanking = rankLocations(preparedPrototypeLocations, defaultSearchProfile, 3);
+import type {
+  ConfiguredCriterion,
+  ConstraintType,
+  CriterionId,
+  CriterionPriority,
+} from "./types/criterion";
 
 function App() {
-  return (
-    <main className="relative isolate min-h-screen overflow-hidden bg-stone-50 px-5 py-10 text-stone-950 sm:px-8 sm:py-14 dark:bg-stone-950 dark:text-stone-50">
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_12%_8%,rgba(132,204,22,0.12),transparent_24%),radial-gradient(circle_at_88%_40%,rgba(14,116,144,0.09),transparent_28%)] dark:bg-[radial-gradient(circle_at_12%_8%,rgba(132,204,22,0.08),transparent_24%),radial-gradient(circle_at_88%_40%,rgba(34,211,238,0.06),transparent_28%)]"
-      />
+  const [configuredCriteria, setConfiguredCriteria] = useState<readonly ConfiguredCriterion[]>(() =>
+    copySearchProfile(defaultSearchProfile),
+  );
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
+  const [editorVersion, setEditorVersion] = useState(0);
+  const locationRanking = rankLocations(preparedPrototypeLocations, configuredCriteria, 3);
+  const selectedMatch =
+    selectedLocationId === null
+      ? null
+      : (locationRanking.qualified.find((match) => match.location.id === selectedLocationId) ??
+        locationRanking.excluded.find((match) => match.location.id === selectedLocationId) ??
+        null);
 
-      <div className="mx-auto w-full max-w-6xl">
-        <header className="max-w-3xl border-l-2 border-lime-500 pl-6 sm:pl-8 dark:border-lime-400">
-          <p className="text-xs font-semibold tracking-[0.18em] text-stone-600 uppercase dark:text-stone-300">
-            Prototype model · Stage 2
+  function handleConstraintTypeChange(criterionId: CriterionId, constraintType: ConstraintType) {
+    setConfiguredCriteria((currentProfile) =>
+      changeConstraintType(currentProfile, criterionId, constraintType),
+    );
+  }
+
+  function handleThresholdChange(criterionId: CriterionId, threshold: number) {
+    setConfiguredCriteria((currentProfile) =>
+      changeThreshold(currentProfile, criterionId, threshold),
+    );
+  }
+
+  function handleRangeChange(criterionId: CriterionId, minimum: number, maximum: number) {
+    setConfiguredCriteria((currentProfile) =>
+      changeRange(currentProfile, criterionId, minimum, maximum),
+    );
+  }
+
+  function handlePriorityChange(criterionId: CriterionId, priority: CriterionPriority) {
+    setConfiguredCriteria((currentProfile) =>
+      changePriority(currentProfile, criterionId, priority),
+    );
+  }
+
+  function handleReset() {
+    setConfiguredCriteria(copySearchProfile(defaultSearchProfile));
+    setSelectedLocationId(null);
+    setEditorVersion((currentVersion) => currentVersion + 1);
+  }
+
+  return (
+    <main className="min-h-screen bg-stone-100 px-4 py-8 text-stone-950 sm:px-8 sm:py-12 dark:bg-stone-950 dark:text-stone-50">
+      <div className="mx-auto w-full max-w-7xl">
+        <header className="max-w-3xl">
+          <p className="text-xs font-semibold tracking-[0.18em] text-lime-700 uppercase dark:text-lime-300">
+            Interactive prototype
           </p>
-          <h1 className="mt-4 text-5xl font-semibold tracking-[-0.045em] sm:text-7xl">
+          <h1 className="mt-3 text-4xl font-semibold tracking-[-0.045em] sm:text-6xl">
             Explocation
           </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-stone-600 sm:text-xl dark:text-stone-300">
-            A first explainable ranking of places against adaptable lifestyle preferences.
+          <p className="mt-4 max-w-2xl text-lg leading-8 text-stone-600 sm:text-xl dark:text-stone-300">
+            Find places that fit how you want to live.
           </p>
         </header>
 
-        <p className="mt-8 max-w-3xl rounded-sm border border-amber-600/30 bg-amber-50/70 px-4 py-3 text-sm leading-6 text-amber-950 dark:border-amber-300/20 dark:bg-amber-950/20 dark:text-amber-100">
+        <p className="mt-7 max-w-3xl border-l-2 border-amber-600 pl-4 text-sm leading-6 text-stone-600 dark:border-amber-300 dark:text-stone-400">
           Location metrics are prepared prototype values for testing the model, not verified
           real-world measurements.
         </p>
 
-        <div className="mt-14 grid gap-14 lg:grid-cols-[minmax(17rem,0.72fr)_minmax(0,1.5fr)] lg:items-start">
-          <CriteriaSummary criteria={defaultSearchProfile} />
-          <TopMatches matches={locationRanking.topMatches} />
-        </div>
+        <div className="mt-12 grid gap-12 xl:grid-cols-[minmax(22rem,0.82fr)_minmax(0,1.35fr)] xl:items-start">
+          <div className="rounded-sm border border-stone-300 bg-stone-50 p-5 sm:p-6 dark:border-stone-700 dark:bg-stone-900/40">
+            <CriteriaPanel
+              key={editorVersion}
+              criteria={configuredCriteria}
+              onConstraintTypeChange={handleConstraintTypeChange}
+              onThresholdChange={handleThresholdChange}
+              onRangeChange={handleRangeChange}
+              onPriorityChange={handlePriorityChange}
+              onReset={handleReset}
+            />
+          </div>
 
-        <div className="mt-16">
-          <ExcludedLocations matches={locationRanking.excluded} />
+          <div className="min-w-0 space-y-12">
+            <TopMatches
+              matches={locationRanking.topMatches}
+              qualifiedCount={locationRanking.qualified.length}
+              totalCount={preparedPrototypeLocations.length}
+              selectedLocationId={selectedLocationId}
+              onSelect={setSelectedLocationId}
+            />
+            <LocationDetails match={selectedMatch} />
+            <ExcludedLocations matches={locationRanking.excluded} />
+          </div>
         </div>
       </div>
     </main>

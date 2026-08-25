@@ -1,6 +1,9 @@
-import type { CriterionCategory, CriterionDefinition, CriterionId } from "../../types/criterion";
-
-const numericConstraintTypes = ["maximum", "minimum", "range"] as const;
+import {
+  type CriterionCategory,
+  type CriterionDefinition,
+  type CriterionId,
+  constraintTypes,
+} from "../../types/criterion";
 
 export const categoryLabels: Readonly<Record<CriterionCategory, string>> = {
   nature: "Nature",
@@ -17,7 +20,7 @@ export const criterionDefinitions: Readonly<Record<CriterionId, CriterionDefinit
     shortLabel: "Forest",
     category: "nature",
     unit: "kilometers",
-    supportedConstraintTypes: numericConstraintTypes,
+    supportedConstraintTypes: constraintTypes,
   },
   waterDistance: {
     id: "waterDistance",
@@ -25,7 +28,7 @@ export const criterionDefinitions: Readonly<Record<CriterionId, CriterionDefinit
     shortLabel: "Water",
     category: "nature",
     unit: "kilometers",
-    supportedConstraintTypes: numericConstraintTypes,
+    supportedConstraintTypes: constraintTypes,
   },
   hikingTrailDistance: {
     id: "hikingTrailDistance",
@@ -33,7 +36,7 @@ export const criterionDefinitions: Readonly<Record<CriterionId, CriterionDefinit
     shortLabel: "Hiking trail",
     category: "outdoor",
     unit: "kilometers",
-    supportedConstraintTypes: numericConstraintTypes,
+    supportedConstraintTypes: constraintTypes,
   },
   groceryDistance: {
     id: "groceryDistance",
@@ -41,7 +44,7 @@ export const criterionDefinitions: Readonly<Record<CriterionId, CriterionDefinit
     shortLabel: "Grocery",
     category: "services",
     unit: "kilometers",
-    supportedConstraintTypes: numericConstraintTypes,
+    supportedConstraintTypes: constraintTypes,
   },
   airportDistance: {
     id: "airportDistance",
@@ -49,7 +52,7 @@ export const criterionDefinitions: Readonly<Record<CriterionId, CriterionDefinit
     shortLabel: "Airport",
     category: "mobility",
     unit: "kilometers",
-    supportedConstraintTypes: numericConstraintTypes,
+    supportedConstraintTypes: constraintTypes,
   },
   summerAverageTemperature: {
     id: "summerAverageTemperature",
@@ -57,6 +60,6 @@ export const criterionDefinitions: Readonly<Record<CriterionId, CriterionDefinit
     shortLabel: "Summer temperature",
     category: "climate",
     unit: "degreesCelsius",
-    supportedConstraintTypes: numericConstraintTypes,
+    supportedConstraintTypes: constraintTypes,
   },
 };

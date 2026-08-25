@@ -32,11 +32,11 @@ pnpm dev
 
 ## Planned Features
 
-- [ ] Configurable location criteria
-- [ ] Minimum, maximum, and range constraints
-- [ ] Required and weighted preferences
-- [ ] Explainable location match score
-- [ ] Top 3 location recommendations
+- [x] Configurable location criteria
+- [x] Minimum, maximum, and range constraints
+- [x] Required and weighted preferences
+- [x] Explainable location match score
+- [x] Top 3 location recommendations
 - [ ] Interactive suitability map
 - [ ] Suitable areas and match regions
 - [ ] Location detail view

@@ -21,7 +21,9 @@ export const criterionCategories = [
 
 export type CriterionCategory = (typeof criterionCategories)[number];
 
-export type ConstraintType = "maximum" | "minimum" | "range";
+export const constraintTypes = ["maximum", "minimum", "range"] as const;
+
+export type ConstraintType = (typeof constraintTypes)[number];
 
 export type NumericConstraint =
   | Readonly<{
@@ -38,7 +40,9 @@ export type NumericConstraint =
       maximum: number;
     }>;
 
-export type CriterionPriority = "required" | "important" | "preferred" | "niceToHave";
+export const criterionPriorities = ["required", "important", "preferred", "niceToHave"] as const;
+
+export type CriterionPriority = (typeof criterionPriorities)[number];
 
 export type CriterionDefinition = Readonly<{
   id: CriterionId;

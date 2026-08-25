@@ -23,20 +23,28 @@ export function ExcludedLocations({ matches }: ExcludedLocationsProps) {
         </p>
       </div>
 
-      <ul className="mt-5 grid gap-x-8 gap-y-4 sm:grid-cols-2">
-        {matches.map((match) => (
-          <li key={match.location.id} className="border-l-2 border-amber-500/70 pl-4">
-            <p className="font-medium">
-              {match.location.name}, {match.location.country}
-            </p>
-            <ul className="mt-1 text-sm leading-6 text-stone-600 dark:text-stone-400">
-              {match.failedRequiredCriteria.map((evaluation) => (
-                <li key={evaluation.criterionId}>Excluded: {formatRequiredFailure(evaluation)}</li>
-              ))}
-            </ul>
-          </li>
-        ))}
-      </ul>
+      {matches.length === 0 ? (
+        <p className="mt-5 text-sm text-stone-600 dark:text-stone-400">
+          No locations are currently excluded by a required preference.
+        </p>
+      ) : (
+        <ul className="mt-5 grid gap-x-8 gap-y-4 sm:grid-cols-2">
+          {matches.map((match) => (
+            <li key={match.location.id} className="border-l-2 border-amber-500/70 pl-4">
+              <p className="font-medium">
+                {match.location.name}, {match.location.country}
+              </p>
+              <ul className="mt-1 text-sm leading-6 text-stone-600 dark:text-stone-400">
+                {match.failedRequiredCriteria.map((evaluation) => (
+                  <li key={evaluation.criterionId}>
+                    Excluded: {formatRequiredFailure(evaluation)}
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

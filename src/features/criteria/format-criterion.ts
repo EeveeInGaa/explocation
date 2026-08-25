@@ -1,5 +1,6 @@
 import type {
   ConfiguredCriterion,
+  ConstraintType,
   CriterionPriority,
   NumericConstraint,
 } from "../../types/criterion";
@@ -11,7 +12,13 @@ const numberFormatter = new Intl.NumberFormat("en", {
   maximumFractionDigits: 1,
 });
 
-const priorityLabels: Readonly<Record<CriterionPriority, string>> = {
+export const constraintTypeLabels: Readonly<Record<ConstraintType, string>> = {
+  maximum: "At most",
+  minimum: "At least",
+  range: "Between",
+};
+
+export const priorityLabels: Readonly<Record<CriterionPriority, string>> = {
   required: "Required",
   important: "Important",
   preferred: "Preferred",
@@ -20,6 +27,24 @@ const priorityLabels: Readonly<Record<CriterionPriority, string>> = {
 
 function formatValue(value: number, unitSymbol: string): string {
   return `${numberFormatter.format(value)} ${unitSymbol}`;
+}
+
+export function formatPreference(constraint: NumericConstraint, unitSymbol: string): string {
+  switch (constraint.type) {
+    case "maximum":
+      return `At most ${formatValue(constraint.threshold, unitSymbol)}`;
+    case "minimum":
+      return `At least ${formatValue(constraint.threshold, unitSymbol)}`;
+    case "range":
+      return `Between ${formatValue(constraint.minimum, unitSymbol)} and ${formatValue(
+        constraint.maximum,
+        unitSymbol,
+      )}`;
+  }
+}
+
+export function formatActualValue(value: number, unitSymbol: string): string {
+  return formatValue(value, unitSymbol);
 }
 
 export function formatConstraint(constraint: NumericConstraint, unitSymbol: string): string {
