@@ -1,8 +1,12 @@
 # Explocation
 
 Explocation is planned to be a tool for discovering geographic areas and locations that
-match a person's criteria, such as access to nature and services or environmental conditions. 
+match a person's criteria, such as access to nature and services or environmental conditions.
 Suitable areas and points are marked on a map, details can be viewed for each location.
+
+During the development of this project, I use an AI agent as a supporting tool. 
+This allows me to strengthen my deliberate and professional use of AI while improving productivity and efficiency throughout the development process (eg. setup, tests, debugging, refinement, optimizations). 
+I make technical and conceptual/architectual decisions myself and review, refine, and extend generated code according to the features and requirements.
 
 ## Tech stack
 
