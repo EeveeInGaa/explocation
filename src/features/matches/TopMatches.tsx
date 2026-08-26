@@ -44,7 +44,7 @@ export function TopMatches({
           </p>
         </div>
       ) : (
-        <ol className="mt-5 space-y-3">
+        <ol aria-label="Ranked top matches" className="mt-5 grid gap-3 md:grid-cols-3">
           {matches.map((match, index) => {
             const isSelected = match.location.id === selectedLocationId;
 
@@ -54,7 +54,7 @@ export function TopMatches({
                   type="button"
                   aria-pressed={isSelected}
                   onClick={() => onSelect(match.location.id)}
-                  className={`grid min-h-24 w-full gap-5 rounded-sm border bg-white p-5 text-left outline-none transition-colors sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center dark:bg-stone-900 ${
+                  className={`grid min-h-48 w-full grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-5 rounded-sm border bg-white p-5 text-left outline-none transition-colors dark:bg-stone-900 ${
                     isSelected
                       ? "border-cyan-700 ring-2 ring-cyan-700/20 dark:border-cyan-300 dark:ring-cyan-300/20"
                       : "border-stone-300 hover:border-stone-500 focus-visible:border-cyan-700 focus-visible:ring-2 focus-visible:ring-cyan-700/30 dark:border-stone-700 dark:hover:border-stone-500 dark:focus-visible:border-cyan-300 dark:focus-visible:ring-cyan-300/30"
@@ -65,14 +65,14 @@ export function TopMatches({
                     {index + 1}
                   </span>
 
-                  <span className="min-w-0">
+                  <span className="min-w-0 self-center">
                     <span className="block text-xl font-semibold tracking-tight">
                       {match.location.name}
                     </span>
                     <span className="mt-1 block text-sm text-stone-500 dark:text-stone-400">
                       {match.location.country}
                     </span>
-                    <span className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
+                    <span className="mt-4 flex flex-wrap gap-x-4 gap-y-2">
                       {match.categoryScores.slice(0, 3).map((categoryScore) => (
                         <span
                           key={categoryScore.category}
@@ -89,11 +89,11 @@ export function TopMatches({
                     </span>
                   </span>
 
-                  <span className="border-t border-stone-200 pt-4 text-left sm:border-t-0 sm:border-l sm:pt-0 sm:pl-6 sm:text-right dark:border-stone-700">
+                  <span className="col-span-2 flex items-end justify-between gap-4 border-t border-stone-200 pt-4 dark:border-stone-700">
                     <span className="block text-3xl font-semibold tracking-[-0.04em] tabular-nums">
                       {formatMatchScore(match.score)}
                     </span>
-                    <span className="mt-1 block text-xs text-stone-500 dark:text-stone-400">
+                    <span className="pb-1 text-xs text-stone-500 dark:text-stone-400">
                       overall match
                     </span>
                   </span>

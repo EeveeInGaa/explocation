@@ -1,5 +1,25 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import type { LocationMapProps } from "./features/map/LocationMap";
+
+vi.mock("./features/map/LocationMap", () => ({
+  LocationMap: ({ matches, selectedLocationId, onSelect }: LocationMapProps) => {
+    const mapLocation = matches.find((match) => match.location.id === "geiranger-no");
+
+    return (
+      <section aria-label="Location map">
+        <p>Selected on map: {selectedLocationId ?? "none"}</p>
+        <p>{matches.filter((match) => !match.qualified).length} excluded map locations</p>
+        {mapLocation === undefined ? null : (
+          <button type="button" onClick={() => onSelect(mapLocation.location.id)}>
+            Select Geiranger from map
+          </button>
+        )}
+      </section>
+    );
+  },
+}));
+
 import App from "./App";
 
 function getCriterionGroup(name: string) {
@@ -112,6 +132,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Białowieża/ }));
 
     expect(screen.getByRole("heading", { level: 3, name: "Białowieża" })).toBeInTheDocument();
+    expect(screen.getByText("Selected on map: bialowieza-pl")).toBeInTheDocument();
     expect(screen.getAllByRole("heading", { level: 4 })).toHaveLength(6);
     expect(
       screen.getByText((_, element) =>
@@ -122,5 +143,28 @@ describe("App", () => {
         ),
       ),
     ).toBeInTheDocument();
+  });
+
+  it("synchronizes a map selection with location details", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Select Geiranger from map" }));
+
+    expect(screen.getByRole("heading", { level: 3, name: "Geiranger" })).toBeInTheDocument();
+    expect(screen.getByText(/Norway · No longer qualified/)).toBeInTheDocument();
+    expect(screen.getByText("Selected on map: geiranger-no")).toBeInTheDocument();
+  });
+
+  it("keeps the selected location when it becomes excluded", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Białowieża/ }));
+    fireEvent.change(within(getCriterionGroup("Airport")).getByLabelText("Value"), {
+      target: { value: "200" },
+    });
+
+    expect(screen.getByRole("heading", { level: 3, name: "Białowieża" })).toBeInTheDocument();
+    expect(screen.getByText(/Poland · No longer qualified/)).toBeInTheDocument();
+    expect(screen.getByText("Selected on map: bialowieza-pl")).toBeInTheDocument();
   });
 });

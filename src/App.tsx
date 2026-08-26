@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { defaultSearchProfile } from "./data/default-search-profile";
 import { preparedPrototypeLocations } from "./data/locations";
 import { CriteriaPanel } from "./features/criteria/CriteriaPanel";
@@ -10,6 +10,7 @@ import {
   copySearchProfile,
 } from "./features/criteria/update-search-profile";
 import { LocationDetails } from "./features/location-details/LocationDetails";
+import { LocationMap } from "./features/map/LocationMap";
 import { ExcludedLocations } from "./features/matches/ExcludedLocations";
 import { rankLocations } from "./features/matches/rank-locations";
 import { TopMatches } from "./features/matches/TopMatches";
@@ -26,7 +27,14 @@ function App() {
   );
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [editorVersion, setEditorVersion] = useState(0);
-  const locationRanking = rankLocations(preparedPrototypeLocations, configuredCriteria, 3);
+  const locationRanking = useMemo(
+    () => rankLocations(preparedPrototypeLocations, configuredCriteria, 3),
+    [configuredCriteria],
+  );
+  const allLocationMatches = useMemo(
+    () => [...locationRanking.qualified, ...locationRanking.excluded],
+    [locationRanking],
+  );
   const selectedMatch =
     selectedLocationId === null
       ? null
@@ -84,7 +92,17 @@ function App() {
           real-world measurements.
         </p>
 
-        <div className="mt-12 grid gap-12 xl:grid-cols-[minmax(22rem,0.82fr)_minmax(0,1.35fr)] xl:items-start">
+        <div className="mt-12">
+          <TopMatches
+            matches={locationRanking.topMatches}
+            qualifiedCount={locationRanking.qualified.length}
+            totalCount={preparedPrototypeLocations.length}
+            selectedLocationId={selectedLocationId}
+            onSelect={setSelectedLocationId}
+          />
+        </div>
+
+        <div className="mt-12 grid gap-10 xl:grid-cols-[minmax(21rem,0.64fr)_minmax(0,1.5fr)] xl:items-start">
           <div className="rounded-sm border border-stone-300 bg-stone-50 p-5 sm:p-6 dark:border-stone-700 dark:bg-stone-900/40">
             <CriteriaPanel
               key={editorVersion}
@@ -97,17 +115,17 @@ function App() {
             />
           </div>
 
-          <div className="min-w-0 space-y-12">
-            <TopMatches
-              matches={locationRanking.topMatches}
-              qualifiedCount={locationRanking.qualified.length}
-              totalCount={preparedPrototypeLocations.length}
-              selectedLocationId={selectedLocationId}
-              onSelect={setSelectedLocationId}
-            />
-            <LocationDetails match={selectedMatch} />
-            <ExcludedLocations matches={locationRanking.excluded} />
-          </div>
+          <LocationMap
+            matches={allLocationMatches}
+            topMatches={locationRanking.topMatches}
+            selectedLocationId={selectedLocationId}
+            onSelect={setSelectedLocationId}
+          />
+        </div>
+
+        <div className="mt-14 space-y-14">
+          <LocationDetails match={selectedMatch} />
+          <ExcludedLocations matches={locationRanking.excluded} />
         </div>
       </div>
     </main>
