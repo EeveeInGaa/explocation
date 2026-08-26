@@ -34,6 +34,29 @@ describe("App", () => {
     expect(screen.getByRole("heading", { level: 2, name: "Criteria" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 2, name: "Top matches" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Białowieża/ })).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: /Prioritize complete matches/ })).not.toBeChecked();
+  });
+
+  it("can prioritize locations that satisfy every preference", () => {
+    render(<App />);
+
+    const rankedMatches = screen.getByRole("list", { name: "Ranked top matches" });
+    const getRankedNames = () =>
+      within(rankedMatches)
+        .getAllByRole("button")
+        .map((button) => button.textContent);
+
+    expect(getRankedNames()[0]).toContain("Kilpisjärvi");
+    expect(getRankedNames()[1]).toContain("Białowieża");
+    expect(getRankedNames()[2]).toContain("Hanko");
+    expect(getRankedNames()[1]).toContain("Some preferences missed");
+    expect(getRankedNames()[2]).toContain("All preferences met");
+
+    fireEvent.click(screen.getByRole("switch", { name: /Prioritize complete matches/ }));
+
+    expect(getRankedNames()[0]).toContain("Kilpisjärvi");
+    expect(getRankedNames()[1]).toContain("Hanko");
+    expect(getRankedNames()[2]).toContain("Białowieża");
   });
 
   it("updates results when a maximum value changes", () => {
@@ -108,6 +131,10 @@ describe("App", () => {
   it("shows a useful no-results state and resets the complete profile", () => {
     render(<App />);
 
+    const completeMatchesSwitch = screen.getByRole("switch", {
+      name: /Prioritize complete matches/,
+    });
+    fireEvent.click(completeMatchesSwitch);
     const airport = getCriterionGroup("Airport");
     fireEvent.change(within(airport).getByLabelText("Value"), {
       target: { value: "200" },
@@ -123,6 +150,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reset preferences" }));
 
     expect(within(getCriterionGroup("Airport")).getByLabelText("Value")).toHaveValue(100);
+    expect(screen.getByRole("switch", { name: /Prioritize complete matches/ })).not.toBeChecked();
     expect(screen.getByRole("button", { name: /Białowieża/ })).toBeInTheDocument();
   });
 

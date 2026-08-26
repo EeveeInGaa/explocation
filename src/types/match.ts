@@ -26,10 +26,16 @@ export type CategoryScore = Readonly<{
 export type LocationMatch = Readonly<{
   location: Location;
   qualified: boolean;
+  allPreferencesSatisfied: boolean;
   score: number;
   evaluations: readonly CriterionEvaluation[];
   categoryScores: readonly CategoryScore[];
   failedRequiredCriteria: readonly CriterionEvaluation[];
+}>;
+
+export type LocationRankingOptions = Readonly<{
+  limit?: number;
+  prioritizeCompleteMatches?: boolean;
 }>;
 
 export type RankedLocationMatches = Readonly<{

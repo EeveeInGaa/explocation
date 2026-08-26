@@ -25,11 +25,16 @@ function App() {
   const [configuredCriteria, setConfiguredCriteria] = useState<readonly ConfiguredCriterion[]>(() =>
     copySearchProfile(defaultSearchProfile),
   );
+  const [prioritizeCompleteMatches, setPrioritizeCompleteMatches] = useState(false);
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [editorVersion, setEditorVersion] = useState(0);
   const locationRanking = useMemo(
-    () => rankLocations(preparedPrototypeLocations, configuredCriteria, 3),
-    [configuredCriteria],
+    () =>
+      rankLocations(preparedPrototypeLocations, configuredCriteria, {
+        limit: 3,
+        prioritizeCompleteMatches,
+      }),
+    [configuredCriteria, prioritizeCompleteMatches],
   );
   const allLocationMatches = useMemo(
     () => [...locationRanking.qualified, ...locationRanking.excluded],
@@ -68,6 +73,7 @@ function App() {
 
   function handleReset() {
     setConfiguredCriteria(copySearchProfile(defaultSearchProfile));
+    setPrioritizeCompleteMatches(false);
     setSelectedLocationId(null);
     setEditorVersion((currentVersion) => currentVersion + 1);
   }
@@ -107,10 +113,12 @@ function App() {
             <CriteriaPanel
               key={editorVersion}
               criteria={configuredCriteria}
+              prioritizeCompleteMatches={prioritizeCompleteMatches}
               onConstraintTypeChange={handleConstraintTypeChange}
               onThresholdChange={handleThresholdChange}
               onRangeChange={handleRangeChange}
               onPriorityChange={handlePriorityChange}
+              onPrioritizeCompleteMatchesChange={setPrioritizeCompleteMatches}
               onReset={handleReset}
             />
           </div>

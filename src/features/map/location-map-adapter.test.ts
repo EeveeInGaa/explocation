@@ -5,7 +5,7 @@ import { rankLocations } from "../matches/rank-locations";
 import { toLocationMapFeatureCollection } from "./location-map-adapter";
 
 describe("location map adapter", () => {
-  const ranking = rankLocations(preparedPrototypeLocations, defaultSearchProfile, 3);
+  const ranking = rankLocations(preparedPrototypeLocations, defaultSearchProfile, { limit: 3 });
   const allMatches = [...ranking.qualified, ...ranking.excluded];
   const featureCollection = toLocationMapFeatureCollection(
     allMatches,
@@ -31,7 +31,7 @@ describe("location map adapter", () => {
     expect(selectedTopMatch?.properties).toMatchObject({
       id: "bialowieza-pl",
       qualified: true,
-      rank: 1,
+      rank: 2,
       selected: true,
     });
     expect(excluded?.properties).toMatchObject({

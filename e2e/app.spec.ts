@@ -11,6 +11,16 @@ test("keeps Top Match selection, map, and details synchronized", async ({ page }
   await expect(map.locator(".maplibregl-canvas")).toBeVisible();
   await expect(map.getByText("10 prepared locations")).toBeVisible();
 
+  const completeMatchesSwitch = page.getByRole("switch", {
+    name: /Prioritize complete matches/,
+  });
+  await expect(completeMatchesSwitch).not.toBeChecked();
+  await completeMatchesSwitch.check();
+  await expect(completeMatchesSwitch).toBeChecked();
+  await expect(
+    page.getByRole("list", { name: "Ranked top matches" }).getByRole("button").nth(1),
+  ).toContainText("Hanko");
+
   const secondMatch = page
     .getByRole("list", { name: "Ranked top matches" })
     .getByRole("button")

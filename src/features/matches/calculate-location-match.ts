@@ -24,6 +24,12 @@ function calculateWeightedScore(evaluations: readonly CriterionEvaluation[]): nu
   return weightedScore / totalWeight;
 }
 
+function calculateSoftCriteriaScore(evaluations: readonly CriterionEvaluation[]): number {
+  return calculateWeightedScore(
+    evaluations.filter((evaluation) => evaluation.priority !== "required"),
+  );
+}
+
 export function calculateCategoryScores(
   evaluations: readonly CriterionEvaluation[],
 ): readonly CategoryScore[] {
@@ -78,7 +84,10 @@ export function calculateLocationMatch(
   return {
     location,
     qualified: failedRequiredCriteria.length === 0,
-    score: calculateWeightedScore(evaluations),
+    allPreferencesSatisfied: evaluations.every((evaluation) => evaluation.satisfied),
+    // Required criteria are qualification gates. Only soft preferences determine
+    // how qualified locations rank against one another.
+    score: calculateSoftCriteriaScore(evaluations),
     evaluations,
     categoryScores: calculateCategoryScores(evaluations),
     failedRequiredCriteria,

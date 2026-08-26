@@ -11,19 +11,23 @@ import { categoryLabels, criterionDefinitions } from "./criterion-definitions";
 
 type CriteriaPanelProps = Readonly<{
   criteria: readonly ConfiguredCriterion[];
+  prioritizeCompleteMatches: boolean;
   onConstraintTypeChange: (criterionId: CriterionId, constraintType: ConstraintType) => void;
   onThresholdChange: (criterionId: CriterionId, threshold: number) => void;
   onRangeChange: (criterionId: CriterionId, minimum: number, maximum: number) => void;
   onPriorityChange: (criterionId: CriterionId, priority: CriterionPriority) => void;
+  onPrioritizeCompleteMatchesChange: (enabled: boolean) => void;
   onReset: () => void;
 }>;
 
 export function CriteriaPanel({
   criteria,
+  prioritizeCompleteMatches,
   onConstraintTypeChange,
   onThresholdChange,
   onRangeChange,
   onPriorityChange,
+  onPrioritizeCompleteMatchesChange,
   onReset,
 }: CriteriaPanelProps) {
   function preventSubmit(event: SubmitEvent<HTMLFormElement>) {
@@ -51,6 +55,23 @@ export function CriteriaPanel({
       </div>
 
       <form onSubmit={preventSubmit} className="mt-6 space-y-8">
+        <label className="flex min-h-12 cursor-pointer items-start gap-3 rounded-sm border border-stone-300 bg-white p-4 transition-colors hover:border-stone-500 dark:border-stone-700 dark:bg-stone-900 dark:hover:border-stone-500">
+          <input
+            type="checkbox"
+            role="switch"
+            aria-checked={prioritizeCompleteMatches}
+            checked={prioritizeCompleteMatches}
+            onChange={(event) => onPrioritizeCompleteMatchesChange(event.target.checked)}
+            className="mt-0.5 size-5 shrink-0 cursor-pointer accent-cyan-700 outline-offset-4 focus-visible:outline-2 focus-visible:outline-cyan-700 dark:accent-cyan-300 dark:focus-visible:outline-cyan-300"
+          />
+          <span>
+            <span className="block text-sm font-semibold">Prioritize complete matches</span>
+            <span className="mt-1 block text-xs leading-5 text-stone-600 dark:text-stone-400">
+              Rank locations that satisfy every preference before otherwise qualified matches.
+            </span>
+          </span>
+        </label>
+
         {criterionCategories.map((category) => {
           const categoryCriteria = criteria.filter(
             (configured) => criterionDefinitions[configured.criterionId].category === category,

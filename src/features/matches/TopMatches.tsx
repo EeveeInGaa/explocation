@@ -72,6 +72,11 @@ export function TopMatches({
                     <span className="mt-1 block text-sm text-stone-500 dark:text-stone-400">
                       {match.location.country}
                     </span>
+                    <span className="mt-2 block text-xs font-medium text-stone-600 dark:text-stone-300">
+                      {match.allPreferencesSatisfied
+                        ? "All preferences met"
+                        : "Some preferences missed"}
+                    </span>
                     <span className="mt-4 flex flex-wrap gap-x-4 gap-y-2">
                       {match.categoryScores.slice(0, 3).map((categoryScore) => (
                         <span

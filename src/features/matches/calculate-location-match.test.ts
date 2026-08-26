@@ -72,6 +72,41 @@ describe("criterion priorities", () => {
     expect(calculateLocationMatch(location, highScoreIsImportant).score).toBe(0.75);
     expect(calculateLocationMatch(location, lowScoreIsImportant).score).toBe(0.25);
   });
+
+  it("uses required criteria only as qualification gates, not ranking weights", () => {
+    const nearAirportThreshold = createTestLocation("near-threshold", {
+      forestDistance: 5,
+      airportDistance: 100,
+    });
+    const farAboveAirportThreshold = createTestLocation("far-above-threshold", {
+      forestDistance: 5,
+      airportDistance: 200,
+    });
+    const profile: readonly ConfiguredCriterion[] = [
+      {
+        criterionId: "forestDistance",
+        priority: "important",
+        constraint: { type: "maximum", threshold: 10 },
+      },
+      {
+        criterionId: "airportDistance",
+        priority: "required",
+        constraint: { type: "minimum", threshold: 100 },
+      },
+    ];
+
+    const nearMatch = calculateLocationMatch(nearAirportThreshold, profile);
+    const farMatch = calculateLocationMatch(farAboveAirportThreshold, profile);
+
+    expect(nearMatch.qualified).toBe(true);
+    expect(farMatch.qualified).toBe(true);
+    expect(nearMatch.score).toBe(0.75);
+    expect(farMatch.score).toBe(nearMatch.score);
+    expect(nearMatch.categoryScores.find(({ category }) => category === "mobility")?.score).toBe(
+      0.5,
+    );
+    expect(farMatch.categoryScores.find(({ category }) => category === "mobility")?.score).toBe(1);
+  });
 });
 
 describe("overall location matches", () => {
@@ -85,6 +120,7 @@ describe("overall location matches", () => {
     const match = calculateLocationMatch(location, defaultSearchProfile);
 
     expect(match.qualified).toBe(true);
+    expect(match.allPreferencesSatisfied).toBe(true);
     expect(match.score).toBeGreaterThan(0);
     expect(match.score).toBeLessThanOrEqual(1);
     expect(match.evaluations).toHaveLength(6);
