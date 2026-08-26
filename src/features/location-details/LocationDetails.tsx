@@ -1,8 +1,8 @@
+import { criterionCategories } from "../../types/criterion";
 import type { LocationMatch } from "../../types/match";
-import { unitDefinitions } from "../../types/unit";
-import { categoryLabels, criterionDefinitions } from "../criteria/criterion-definitions";
-import { formatActualValue, formatPreference } from "../criteria/format-criterion";
+import { categoryLabels } from "../criteria/criterion-definitions";
 import { formatMatchScore } from "../matches/format-match";
+import { CriterionVisualization } from "./CriterionVisualization";
 
 type LocationDetailsProps = Readonly<{
   match: LocationMatch | null;
@@ -60,37 +60,36 @@ export function LocationDetails({ match }: LocationDetailsProps) {
             ))}
           </dl>
 
-          <ul className="mt-6 divide-y divide-stone-200 dark:divide-stone-800">
-            {match.evaluations.map((evaluation) => {
-              const definition = criterionDefinitions[evaluation.criterionId];
-              const unit = unitDefinitions[evaluation.actual.unit];
+          <div className="mt-8">
+            {criterionCategories.map((category) => {
+              const evaluations = match.evaluations.filter(
+                (evaluation) => evaluation.category === category,
+              );
+
+              if (evaluations.length === 0) {
+                return null;
+              }
 
               return (
-                <li
-                  key={evaluation.criterionId}
-                  className="grid gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+                <div
+                  key={category}
+                  className="grid gap-2 border-t border-stone-300 py-3 lg:grid-cols-[10rem_minmax(0,1fr)] lg:gap-8 dark:border-stone-700"
                 >
-                  <div>
-                    <h4 className="font-semibold">{definition.label}</h4>
-                    <p className="mt-1 text-sm leading-6 text-stone-600 dark:text-stone-400">
-                      Actual: {formatActualValue(evaluation.actual.value, unit.symbol)} ·
-                      Preference: {formatPreference(evaluation.constraint, unit.symbol)}
-                    </p>
+                  <h4 className="pt-5 text-xs font-semibold tracking-[0.14em] text-stone-500 uppercase dark:text-stone-400">
+                    {categoryLabels[category]}
+                  </h4>
+                  <div className="min-w-0 divide-y divide-stone-200 dark:divide-stone-800">
+                    {evaluations.map((evaluation) => (
+                      <CriterionVisualization
+                        key={evaluation.criterionId}
+                        evaluation={evaluation}
+                      />
+                    ))}
                   </div>
-                  <p
-                    className={`text-sm font-semibold ${
-                      evaluation.satisfied
-                        ? "text-lime-700 dark:text-lime-300"
-                        : "text-amber-700 dark:text-amber-300"
-                    }`}
-                  >
-                    <span aria-hidden="true">{evaluation.satisfied ? "✓" : "—"} </span>
-                    {evaluation.satisfied ? "Satisfied" : "Not satisfied"}
-                  </p>
-                </li>
+                </div>
               );
             })}
-          </ul>
+          </div>
         </div>
       )}
     </section>

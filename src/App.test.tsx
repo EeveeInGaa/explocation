@@ -62,6 +62,7 @@ describe("App", () => {
   it("updates results when a maximum value changes", () => {
     render(<App />);
 
+    fireEvent.click(screen.getByRole("button", { name: /Białowieża/ }));
     const forest = getCriterionGroup("Forest");
     const valueInput = within(forest).getByLabelText("Value");
     const initialMatchText = screen.getByRole("button", { name: /Białowieża/ }).textContent;
@@ -71,11 +72,13 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: /Białowieża/ }).textContent).not.toBe(
       initialMatchText,
     );
+    expect(screen.getByText("At most 0.1 km")).toBeVisible();
   });
 
   it("supports changing the same criterion to minimum and range constraints", () => {
     render(<App />);
 
+    fireEvent.click(screen.getByRole("button", { name: /Białowieża/ }));
     const forest = getCriterionGroup("Forest");
     const preferenceSelect = within(forest).getByLabelText("Preference");
     fireEvent.change(preferenceSelect, { target: { value: "minimum" } });
@@ -84,6 +87,7 @@ describe("App", () => {
     const minimumSelect = within(minimumForest).getByLabelText("Preference");
     expect(minimumSelect).toHaveValue("minimum");
     expect(within(minimumForest).getByLabelText("Value")).toBeInTheDocument();
+    expect(screen.getByText("At least 1 km")).toBeVisible();
 
     fireEvent.change(minimumSelect, { target: { value: "range" } });
 
@@ -92,6 +96,7 @@ describe("App", () => {
     expect(within(rangeForest).getByLabelText("From")).toBeInTheDocument();
     expect(within(rangeForest).getByLabelText("To")).toBeInTheDocument();
     expect(within(rangeForest).queryByLabelText("Value")).not.toBeInTheDocument();
+    expect(screen.getByText("Between 1 km and 1 km")).toBeVisible();
   });
 
   it("applies required priority changes to qualification", () => {
@@ -161,16 +166,27 @@ describe("App", () => {
 
     expect(screen.getByRole("heading", { level: 3, name: "Białowieża" })).toBeInTheDocument();
     expect(screen.getByText("Selected on map: bialowieza-pl")).toBeInTheDocument();
-    expect(screen.getAllByRole("heading", { level: 4 })).toHaveLength(6);
-    expect(
-      screen.getByText((_, element) =>
-        Boolean(
-          element?.tagName === "P" &&
-            element.textContent?.includes("Actual:") &&
-            element.textContent.includes("Preference: At most 1 km"),
-        ),
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { level: 4 })).toHaveLength(5);
+    expect(screen.getAllByRole("heading", { level: 5 })).toHaveLength(6);
+    expect(screen.getByText("At most 1 km")).toBeVisible();
+  });
+
+  it("updates criterion visualizations when the selected location changes", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Białowieża/ }));
+    const forestHeading = screen.getByRole("heading", { level: 5, name: "Distance to forest" });
+    const forestVisualization = forestHeading.closest("figure");
+
+    if (forestVisualization === null) {
+      throw new Error("Expected the forest criterion visualization.");
+    }
+
+    expect(within(forestVisualization).getByText("0.1 km", { selector: "span" })).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: /Kilpisjärvi/ }));
+
+    expect(within(forestVisualization).getByText("0.4 km", { selector: "span" })).toBeVisible();
   });
 
   it("synchronizes a map selection with location details", () => {
@@ -194,5 +210,7 @@ describe("App", () => {
     expect(screen.getByRole("heading", { level: 3, name: "Białowieża" })).toBeInTheDocument();
     expect(screen.getByText(/Poland · No longer qualified/)).toBeInTheDocument();
     expect(screen.getByText("Selected on map: bialowieza-pl")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 5, name: "Distance to airport" })).toBeVisible();
+    expect(screen.getByText("At least 200 km")).toBeVisible();
   });
 });

@@ -52,7 +52,7 @@ pnpm dev
 - [ ] Light pollution, Air pollution
 - [ ] Mobile network coverage, Internet/broadband availability
 - [ ] Environmental and infrastructure exclusion criteria
-- [ ] Interactive D3 visualizations
+- [x] Interactive D3 visualizations
 - [ ] Recharts-based climate and comparison charts
 - [ ] Saved searches and favorite locations
 - [ ] Shareable searches

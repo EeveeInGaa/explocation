@@ -28,9 +28,12 @@ test("keeps Top Match selection, map, and details synchronized", async ({ page }
   await secondMatch.click();
 
   await expect(secondMatch).toHaveAttribute("aria-pressed", "true");
+  const locationDetails = page.getByRole("region", { name: "Location details" });
+  await expect(locationDetails.getByRole("heading", { level: 3 })).toBeVisible();
   await expect(
-    page.getByRole("region", { name: "Location details" }).getByRole("heading", { level: 3 }),
+    locationDetails.getByRole("heading", { level: 5, name: "Distance to forest" }),
   ).toBeVisible();
+  await expect(locationDetails.getByText("0.8 km", { exact: true }).first()).toBeVisible();
   await expect(map).toBeVisible();
 
   await page.setViewportSize({ width: 390, height: 844 });
