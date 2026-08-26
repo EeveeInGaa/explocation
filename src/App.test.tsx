@@ -166,8 +166,11 @@ describe("App", () => {
 
     expect(screen.getByRole("heading", { level: 3, name: "Białowieża" })).toBeInTheDocument();
     expect(screen.getByText("Selected on map: bialowieza-pl")).toBeInTheDocument();
-    expect(screen.getAllByRole("heading", { level: 4 })).toHaveLength(5);
-    expect(screen.getAllByRole("heading", { level: 5 })).toHaveLength(6);
+    expect(screen.getByRole("heading", { level: 4, name: "Nature" })).toBeVisible();
+    expect(screen.getByRole("heading", { level: 4, name: "Yearly climate" })).toBeVisible();
+    expect(
+      screen.getByRole("heading", { level: 5, name: "Temperature through the year" }),
+    ).toBeVisible();
     expect(screen.getByText("At most 1 km")).toBeVisible();
   });
 

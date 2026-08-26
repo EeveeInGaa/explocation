@@ -34,6 +34,13 @@ test("keeps Top Match selection, map, and details synchronized", async ({ page }
     locationDetails.getByRole("heading", { level: 5, name: "Distance to forest" }),
   ).toBeVisible();
   await expect(locationDetails.getByText("0.8 km", { exact: true }).first()).toBeVisible();
+  await expect(
+    locationDetails.getByRole("heading", { level: 4, name: "Yearly climate" }),
+  ).toBeVisible();
+  await locationDetails.getByRole("button", { name: "Daylight" }).click();
+  await expect(
+    locationDetails.getByRole("heading", { level: 5, name: "Daylight through the year" }),
+  ).toBeVisible();
   await expect(map).toBeVisible();
 
   await page.setViewportSize({ width: 390, height: 844 });

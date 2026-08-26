@@ -1,8 +1,10 @@
+import { getPreparedMonthlyClimate } from "../../data/monthly-climate";
 import { criterionCategories } from "../../types/criterion";
 import type { LocationMatch } from "../../types/match";
 import { categoryLabels } from "../criteria/criterion-definitions";
 import { formatMatchScore } from "../matches/format-match";
 import { CriterionVisualization } from "./CriterionVisualization";
+import { ClimateSection } from "./climate/ClimateSection";
 
 type LocationDetailsProps = Readonly<{
   match: LocationMatch | null;
@@ -90,6 +92,11 @@ export function LocationDetails({ match }: LocationDetailsProps) {
               );
             })}
           </div>
+
+          <ClimateSection
+            locationName={match.location.name}
+            climateData={getPreparedMonthlyClimate(match.location.id)}
+          />
         </div>
       )}
     </section>
