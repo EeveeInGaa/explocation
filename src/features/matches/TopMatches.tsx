@@ -3,6 +3,7 @@ import { categoryLabels } from "../criteria/criterion-definitions";
 import { formatMatchScore } from "./format-match";
 
 type TopMatchesProps = Readonly<{
+  hasActiveCriteria: boolean;
   matches: readonly LocationMatch[];
   qualifiedCount: number;
   totalCount: number;
@@ -11,6 +12,7 @@ type TopMatchesProps = Readonly<{
 }>;
 
 export function TopMatches({
+  hasActiveCriteria,
   matches,
   qualifiedCount,
   totalCount,
@@ -31,12 +33,21 @@ export function TopMatches({
           </h2>
         </div>
         <p className="text-sm text-stone-500 tabular-nums dark:text-stone-400" aria-live="polite">
-          {qualifiedCount} of {totalCount} qualify
+          {hasActiveCriteria
+            ? `${qualifiedCount} of ${totalCount} qualify`
+            : "Add criteria to begin"}
           <span className="sr-only">. Top matches: {topMatchNames || "none"}.</span>
         </p>
       </div>
 
-      {matches.length === 0 ? (
+      {!hasActiveCriteria ? (
+        <div className="mt-5 rounded-sm border border-dashed border-stone-400 bg-white/50 px-6 py-10 text-center dark:border-stone-600 dark:bg-stone-900/40">
+          <h3 className="text-lg font-semibold">Your match ranking will appear here.</h3>
+          <p className="mt-2 text-sm leading-6 text-stone-600 dark:text-stone-400">
+            Add at least one criterion to start comparing prepared locations.
+          </p>
+        </div>
+      ) : matches.length === 0 ? (
         <div className="mt-5 rounded-sm border border-dashed border-stone-400 bg-white/50 px-6 py-10 text-center dark:border-stone-600 dark:bg-stone-900/40">
           <h3 className="text-lg font-semibold">No locations match all required criteria.</h3>
           <p className="mt-2 text-sm leading-6 text-stone-600 dark:text-stone-400">

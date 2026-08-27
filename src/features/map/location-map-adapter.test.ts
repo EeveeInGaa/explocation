@@ -1,11 +1,28 @@
 import { describe, expect, it } from "vitest";
-import { defaultSearchProfile } from "../../data/default-search-profile";
 import { preparedPrototypeLocations } from "../../data/locations";
+import type { ConfiguredCriterion } from "../../types/criterion";
 import { rankLocations } from "../matches/rank-locations";
 import { toLocationMapFeatureCollection } from "./location-map-adapter";
 
 describe("location map adapter", () => {
-  const ranking = rankLocations(preparedPrototypeLocations, defaultSearchProfile, { limit: 3 });
+  const profile: readonly ConfiguredCriterion[] = [
+    {
+      criterionId: "forestDistance",
+      priority: "preferred",
+      constraint: { type: "maximum", threshold: 1 },
+    },
+    {
+      criterionId: "groceryDistance",
+      priority: "important",
+      constraint: { type: "maximum", threshold: 15 },
+    },
+    {
+      criterionId: "airportDistance",
+      priority: "required",
+      constraint: { type: "minimum", threshold: 100 },
+    },
+  ];
+  const ranking = rankLocations(preparedPrototypeLocations, profile, { limit: 3 });
   const allMatches = [...ranking.qualified, ...ranking.excluded];
   const featureCollection = toLocationMapFeatureCollection(
     allMatches,
@@ -31,7 +48,7 @@ describe("location map adapter", () => {
     expect(selectedTopMatch?.properties).toMatchObject({
       id: "bialowieza-pl",
       qualified: true,
-      rank: 2,
+      rank: 1,
       selected: true,
     });
     expect(excluded?.properties).toMatchObject({
@@ -78,7 +95,15 @@ describe("location map adapter", () => {
       "name",
       "qualified",
       "rank",
+      "searchActive",
       "selected",
     ]);
+  });
+
+  it("marks prepared locations as neutral when the search profile is empty", () => {
+    const neutral = toLocationMapFeatureCollection(allMatches, [], null, false);
+
+    expect(neutral.features.every((feature) => !feature.properties.searchActive)).toBe(true);
+    expect(neutral.features.every((feature) => feature.properties.rank === 0)).toBe(true);
   });
 });

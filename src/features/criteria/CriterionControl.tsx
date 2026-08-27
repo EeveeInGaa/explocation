@@ -16,6 +16,7 @@ type CriterionControlProps = Readonly<{
   onThresholdChange: (threshold: number) => void;
   onRangeChange: (minimum: number, maximum: number) => void;
   onPriorityChange: (priority: CriterionPriority) => void;
+  onRemove: () => void;
 }>;
 
 type ThresholdInputProps = Readonly<{
@@ -232,6 +233,7 @@ export function CriterionControl({
   onThresholdChange,
   onRangeChange,
   onPriorityChange,
+  onRemove,
 }: CriterionControlProps) {
   const definition = criterionDefinitions[configured.criterionId];
   const unit = unitDefinitions[definition.unit];
@@ -243,7 +245,18 @@ export function CriterionControl({
         {definition.shortLabel}
       </legend>
 
-      <div className="mt-1 grid gap-3 sm:grid-cols-2">
+      <div className="flex justify-end">
+        <button
+          type="button"
+          aria-label={`Remove ${definition.shortLabel} criterion`}
+          onClick={onRemove}
+          className="min-h-11 rounded-sm px-2 py-1 text-sm font-semibold text-stone-600 underline decoration-stone-400 underline-offset-4 outline-none hover:text-red-700 focus-visible:ring-2 focus-visible:ring-cyan-700 dark:text-stone-300 dark:hover:text-red-300 dark:focus-visible:ring-cyan-300"
+        >
+          Remove
+        </button>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <label
             htmlFor={`${controlId}-type`}

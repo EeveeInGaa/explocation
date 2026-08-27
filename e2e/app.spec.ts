@@ -1,4 +1,9 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
+
+async function addCriterion(page: Page, name: RegExp) {
+  await page.getByRole("button", { name: "Add criterion" }).click();
+  await page.getByRole("button", { name }).click();
+}
 
 test("keeps Top Match selection, map, and details synchronized", async ({ page }) => {
   await page.goto("/");
@@ -11,20 +16,20 @@ test("keeps Top Match selection, map, and details synchronized", async ({ page }
   await expect(map.locator(".maplibregl-canvas")).toBeVisible();
   await expect(map.getByText("10 prepared locations")).toBeVisible();
 
+  await addCriterion(page, /Distance to forest/);
+  await addCriterion(page, /Distance to grocery store/);
+  await addCriterion(page, /Distance to airport/);
+
   const completeMatchesSwitch = page.getByRole("switch", {
     name: /Prioritize complete matches/,
   });
   await expect(completeMatchesSwitch).not.toBeChecked();
   await completeMatchesSwitch.check();
   await expect(completeMatchesSwitch).toBeChecked();
-  await expect(
-    page.getByRole("list", { name: "Ranked top matches" }).getByRole("button").nth(1),
-  ).toContainText("Hanko");
 
   const secondMatch = page
     .getByRole("list", { name: "Ranked top matches" })
-    .getByRole("button")
-    .nth(1);
+    .getByRole("button", { name: /Hanko/ });
   await secondMatch.click();
 
   await expect(secondMatch).toHaveAttribute("aria-pressed", "true");
@@ -47,7 +52,31 @@ test("keeps Top Match selection, map, and details synchronized", async ({ page }
   await expect(page.getByRole("heading", { level: 2, name: "Criteria" })).toBeVisible();
   await expect(page.getByRole("heading", { level: 2, name: "Top matches" })).toBeVisible();
   await expect(map).toBeVisible();
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
-    true,
-  );
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+    .toBe(true);
+});
+
+test("adds and removes a criterion from the search profile", async ({ page }) => {
+  await page.goto("/");
+
+  const addCriterionButton = page.getByRole("button", { name: "Add criterion" });
+  await addCriterionButton.focus();
+  await page.keyboard.press("Enter");
+
+  const forestOption = page.getByRole("button", { name: /Distance to forest/ });
+  await page.keyboard.press("Tab");
+  await expect(forestOption).toBeFocused();
+  await page.keyboard.press("Enter");
+
+  await expect(page.getByRole("group", { name: "Forest" })).toBeVisible();
+  await expect(addCriterionButton).toBeFocused();
+  await expect(page.getByRole("list", { name: "Ranked top matches" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Remove Forest criterion" }).click();
+  await expect(page.getByRole("group", { name: "Forest" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Add criterion" }).click();
+  await expect(page.getByRole("button", { name: /Distance to forest/ })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Location map" })).toBeVisible();
 });

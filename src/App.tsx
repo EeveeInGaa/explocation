@@ -1,13 +1,16 @@
 import { useMemo, useState } from "react";
-import { defaultSearchProfile } from "./data/default-search-profile";
+import { initialSearchProfile } from "./data/default-search-profile";
 import { preparedPrototypeLocations } from "./data/locations";
 import { CriteriaPanel } from "./features/criteria/CriteriaPanel";
+import { criterionDefinitions } from "./features/criteria/criterion-definitions";
 import {
+  addCriterionToProfile,
   changeConstraintType,
   changePriority,
   changeRange,
   changeThreshold,
   copySearchProfile,
+  removeCriterionFromProfile,
 } from "./features/criteria/update-search-profile";
 import { LocationDetails } from "./features/location-details/LocationDetails";
 import { LocationMap } from "./features/map/LocationMap";
@@ -23,8 +26,9 @@ import type {
 
 function App() {
   const [configuredCriteria, setConfiguredCriteria] = useState<readonly ConfiguredCriterion[]>(() =>
-    copySearchProfile(defaultSearchProfile),
+    copySearchProfile(initialSearchProfile),
   );
+  const hasActiveCriteria = configuredCriteria.length > 0;
   const [prioritizeCompleteMatches, setPrioritizeCompleteMatches] = useState(false);
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [editorVersion, setEditorVersion] = useState(0);
@@ -71,8 +75,20 @@ function App() {
     );
   }
 
+  function handleAddCriterion(criterionId: CriterionId) {
+    setConfiguredCriteria((currentProfile) =>
+      addCriterionToProfile(currentProfile, criterionDefinitions[criterionId]),
+    );
+  }
+
+  function handleRemoveCriterion(criterionId: CriterionId) {
+    setConfiguredCriteria((currentProfile) =>
+      removeCriterionFromProfile(currentProfile, criterionId),
+    );
+  }
+
   function handleReset() {
-    setConfiguredCriteria(copySearchProfile(defaultSearchProfile));
+    setConfiguredCriteria(copySearchProfile(initialSearchProfile));
     setPrioritizeCompleteMatches(false);
     setSelectedLocationId(null);
     setEditorVersion((currentVersion) => currentVersion + 1);
@@ -100,8 +116,9 @@ function App() {
 
         <div className="mt-12">
           <TopMatches
-            matches={locationRanking.topMatches}
-            qualifiedCount={locationRanking.qualified.length}
+            hasActiveCriteria={hasActiveCriteria}
+            matches={hasActiveCriteria ? locationRanking.topMatches : []}
+            qualifiedCount={hasActiveCriteria ? locationRanking.qualified.length : 0}
             totalCount={preparedPrototypeLocations.length}
             selectedLocationId={selectedLocationId}
             onSelect={setSelectedLocationId}
@@ -118,6 +135,8 @@ function App() {
               onThresholdChange={handleThresholdChange}
               onRangeChange={handleRangeChange}
               onPriorityChange={handlePriorityChange}
+              onAddCriterion={handleAddCriterion}
+              onRemoveCriterion={handleRemoveCriterion}
               onPrioritizeCompleteMatchesChange={setPrioritizeCompleteMatches}
               onReset={handleReset}
             />
@@ -125,16 +144,19 @@ function App() {
 
           <LocationMap
             matches={allLocationMatches}
-            topMatches={locationRanking.topMatches}
-            selectedLocationId={selectedLocationId}
+            topMatches={hasActiveCriteria ? locationRanking.topMatches : []}
+            selectedLocationId={hasActiveCriteria ? selectedLocationId : null}
+            hasActiveCriteria={hasActiveCriteria}
             onSelect={setSelectedLocationId}
           />
         </div>
 
-        <div className="mt-14 space-y-14">
-          <LocationDetails match={selectedMatch} />
-          <ExcludedLocations matches={locationRanking.excluded} />
-        </div>
+        {hasActiveCriteria ? (
+          <div className="mt-14 space-y-14">
+            <LocationDetails match={selectedMatch} />
+            <ExcludedLocations matches={locationRanking.excluded} />
+          </div>
+        ) : null}
       </div>
     </main>
   );

@@ -1,10 +1,50 @@
+import { defaultCriterionConfigurations } from "../../data/default-criterion-configurations";
 import type {
   ConfiguredCriterion,
   ConstraintType,
+  CriterionDefinition,
   CriterionId,
   CriterionPriority,
   NumericConstraint,
 } from "../../types/criterion";
+
+export function createConfiguredCriterion(definition: CriterionDefinition): ConfiguredCriterion {
+  const defaultConfiguration = defaultCriterionConfigurations[definition.id];
+
+  if (!definition.supportedConstraintTypes.includes(defaultConfiguration.constraint.type)) {
+    throw new Error(
+      `Default constraint type ${defaultConfiguration.constraint.type} is not supported by ${definition.id}.`,
+    );
+  }
+
+  return {
+    criterionId: definition.id,
+    ...defaultConfiguration,
+    constraint: { ...defaultConfiguration.constraint },
+  };
+}
+
+export function addCriterionToProfile(
+  profile: readonly ConfiguredCriterion[],
+  definition: CriterionDefinition,
+): readonly ConfiguredCriterion[] {
+  if (profile.some((configured) => configured.criterionId === definition.id)) {
+    throw new Error(`Criterion ${definition.id} is already configured.`);
+  }
+
+  return [...profile, createConfiguredCriterion(definition)];
+}
+
+export function removeCriterionFromProfile(
+  profile: readonly ConfiguredCriterion[],
+  criterionId: CriterionId,
+): readonly ConfiguredCriterion[] {
+  if (!profile.some((configured) => configured.criterionId === criterionId)) {
+    throw new Error(`Criterion ${criterionId} is not configured.`);
+  }
+
+  return profile.filter((configured) => configured.criterionId !== criterionId);
+}
 
 function replaceCriterion(
   profile: readonly ConfiguredCriterion[],

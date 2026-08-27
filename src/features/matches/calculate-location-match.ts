@@ -84,7 +84,8 @@ export function calculateLocationMatch(
   return {
     location,
     qualified: failedRequiredCriteria.length === 0,
-    allPreferencesSatisfied: evaluations.every((evaluation) => evaluation.satisfied),
+    allPreferencesSatisfied:
+      evaluations.length > 0 && evaluations.every((evaluation) => evaluation.satisfied),
     // Required criteria are qualification gates. Only soft preferences determine
     // how qualified locations rank against one another.
     score: calculateSoftCriteriaScore(evaluations),

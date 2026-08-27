@@ -4,6 +4,7 @@ export type LocationMapProperties = Readonly<{
   id: string;
   name: string;
   qualified: boolean;
+  searchActive: boolean;
   rank: number;
   selected: boolean;
 }>;
@@ -27,6 +28,7 @@ export function toLocationMapFeatureCollection(
   matches: readonly LocationMatch[],
   topMatches: readonly LocationMatch[],
   selectedLocationId: string | null,
+  hasActiveCriteria = true,
 ): LocationMapFeatureCollection {
   const ranks = new Map(topMatches.map((match, index) => [match.location.id, index + 1] as const));
 
@@ -43,6 +45,7 @@ export function toLocationMapFeatureCollection(
         id: match.location.id,
         name: match.location.name,
         qualified: match.qualified,
+        searchActive: hasActiveCriteria,
         rank: ranks.get(match.location.id) ?? 0,
         selected: match.location.id === selectedLocationId,
       },

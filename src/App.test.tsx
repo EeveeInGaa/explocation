@@ -26,42 +26,104 @@ function getCriterionGroup(name: string) {
   return screen.getByRole("group", { name });
 }
 
+function addCriterion(name: RegExp) {
+  fireEvent.click(screen.getByRole("button", { name: "Add criterion" }));
+  fireEvent.click(screen.getByRole("button", { name }));
+}
+
 describe("App", () => {
-  it("renders editable preferences and calculated matches", () => {
+  it("starts with an empty profile and invites the user to add criteria", () => {
     render(<App />);
 
     expect(screen.getByRole("heading", { level: 1, name: "Explocation" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 2, name: "Criteria" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 2, name: "Top matches" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Białowieża/ })).toBeInTheDocument();
-    expect(screen.getByRole("switch", { name: /Prioritize complete matches/ })).not.toBeChecked();
+    expect(screen.getByText("Start by adding the things that matter to you.")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Add criterion" })).toBeVisible();
+    expect(screen.queryByRole("group")).not.toBeInTheDocument();
+    expect(screen.queryByRole("list", { name: "Ranked top matches" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("switch", { name: /Prioritize complete matches/ }),
+    ).not.toBeInTheDocument();
   });
 
-  it("can prioritize locations that satisfy every preference", () => {
+  it("can enable complete-match prioritization", () => {
     render(<App />);
 
-    const rankedMatches = screen.getByRole("list", { name: "Ranked top matches" });
-    const getRankedNames = () =>
-      within(rankedMatches)
-        .getAllByRole("button")
-        .map((button) => button.textContent);
+    addCriterion(/Distance to forest/);
 
-    expect(getRankedNames()[0]).toContain("Kilpisjärvi");
-    expect(getRankedNames()[1]).toContain("Białowieża");
-    expect(getRankedNames()[2]).toContain("Hanko");
-    expect(getRankedNames()[1]).toContain("Some preferences missed");
-    expect(getRankedNames()[2]).toContain("All preferences met");
+    const completeMatchesSwitch = screen.getByRole("switch", {
+      name: /Prioritize complete matches/,
+    });
+    fireEvent.click(completeMatchesSwitch);
 
-    fireEvent.click(screen.getByRole("switch", { name: /Prioritize complete matches/ }));
+    expect(completeMatchesSwitch).toBeChecked();
+  });
 
-    expect(getRankedNames()[0]).toContain("Kilpisjärvi");
-    expect(getRankedNames()[1]).toContain("Hanko");
-    expect(getRankedNames()[2]).toContain("Białowieża");
+  it("opens a grouped picker that excludes active criteria", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add criterion" }));
+
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Choose what matters to you" }),
+    ).toBeVisible();
+    expect(screen.getByRole("heading", { level: 4, name: "Nature" })).toBeVisible();
+    expect(screen.getByRole("heading", { level: 4, name: "Outdoor" })).toBeVisible();
+    expect(screen.getByRole("heading", { level: 4, name: "Services" })).toBeVisible();
+    expect(screen.getByRole("heading", { level: 4, name: "Mobility" })).toBeVisible();
+    expect(screen.getByRole("heading", { level: 4, name: "Climate" })).toBeVisible();
+    expect(screen.getByRole("button", { name: /Distance to forest/ })).toBeVisible();
+    expect(screen.getByRole("button", { name: /Distance to water/ })).toBeVisible();
+    expect(screen.getByRole("button", { name: /Distance to hiking trail/ })).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: /Distance to forest/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Add criterion" }));
+    expect(screen.queryByRole("button", { name: /Distance to forest/ })).not.toBeInTheDocument();
+  });
+
+  it("adds and removes a criterion without resetting existing configuration", () => {
+    render(<App />);
+
+    addCriterion(/Distance to airport/);
+    const airport = getCriterionGroup("Airport");
+    fireEvent.change(within(airport).getByLabelText("Value"), { target: { value: "150" } });
+    fireEvent.change(within(airport).getByLabelText("Priority"), {
+      target: { value: "required" },
+    });
+    addCriterion(/Distance to water/);
+
+    expect(getCriterionGroup("Water")).toBeVisible();
+    expect(within(getCriterionGroup("Airport")).getByLabelText("Value")).toHaveValue(150);
+    expect(within(getCriterionGroup("Airport")).getByLabelText("Priority")).toHaveValue("required");
+
+    fireEvent.click(screen.getByRole("button", { name: "Add criterion" }));
+    expect(screen.queryByRole("button", { name: /Distance to water/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Add criterion" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove Water criterion" }));
+    expect(screen.queryByRole("group", { name: "Water" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Add criterion" }));
+    expect(screen.getByRole("button", { name: /Distance to water/ })).toBeVisible();
+  });
+
+  it("updates matches when a criterion is added", () => {
+    render(<App />);
+
+    addCriterion(/Distance to forest/);
+    const initialRanking = screen.getByRole("list", { name: "Ranked top matches" }).textContent;
+    addCriterion(/Distance to water/);
+
+    expect(screen.getByRole("list", { name: "Ranked top matches" }).textContent).not.toBe(
+      initialRanking,
+    );
   });
 
   it("updates results when a maximum value changes", () => {
     render(<App />);
 
+    addCriterion(/Distance to forest/);
     fireEvent.click(screen.getByRole("button", { name: /Białowieża/ }));
     const forest = getCriterionGroup("Forest");
     const valueInput = within(forest).getByLabelText("Value");
@@ -78,6 +140,7 @@ describe("App", () => {
   it("supports changing the same criterion to minimum and range constraints", () => {
     render(<App />);
 
+    addCriterion(/Distance to forest/);
     fireEvent.click(screen.getByRole("button", { name: /Białowieża/ }));
     const forest = getCriterionGroup("Forest");
     const preferenceSelect = within(forest).getByLabelText("Preference");
@@ -102,6 +165,7 @@ describe("App", () => {
   it("applies required priority changes to qualification", () => {
     render(<App />);
 
+    addCriterion(/Distance to forest/);
     const forest = getCriterionGroup("Forest");
     fireEvent.change(within(forest).getByLabelText("Priority"), {
       target: { value: "required" },
@@ -114,6 +178,7 @@ describe("App", () => {
   it("offers every supported priority", () => {
     render(<App />);
 
+    addCriterion(/Distance to forest/);
     const prioritySelect = within(getCriterionGroup("Forest")).getByLabelText("Priority");
     for (const priority of ["required", "important", "preferred", "niceToHave"]) {
       fireEvent.change(prioritySelect, { target: { value: priority } });
@@ -124,6 +189,7 @@ describe("App", () => {
   it("keeps invalid drafts away from the matching engine", () => {
     render(<App />);
 
+    addCriterion(/Distance to airport/);
     const airport = getCriterionGroup("Airport");
     const valueInput = within(airport).getByLabelText("Value");
     fireEvent.change(valueInput, { target: { value: "" } });
@@ -136,6 +202,7 @@ describe("App", () => {
   it("shows a useful no-results state and resets the complete profile", () => {
     render(<App />);
 
+    addCriterion(/Distance to airport/);
     const completeMatchesSwitch = screen.getByRole("switch", {
       name: /Prioritize complete matches/,
     });
@@ -154,14 +221,41 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Reset preferences" }));
 
-    expect(within(getCriterionGroup("Airport")).getByLabelText("Value")).toHaveValue(100);
-    expect(screen.getByRole("switch", { name: /Prioritize complete matches/ })).not.toBeChecked();
-    expect(screen.getByRole("button", { name: /Białowieża/ })).toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "Airport" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("switch", { name: /Prioritize complete matches/ }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("Start by adding the things that matter to you.")).toBeVisible();
+  });
+
+  it("reset clears every user-selected criterion", () => {
+    render(<App />);
+
+    addCriterion(/Distance to forest/);
+    addCriterion(/Distance to water/);
+    fireEvent.click(screen.getByRole("button", { name: "Reset preferences" }));
+
+    expect(screen.queryByRole("group", { name: "Forest" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "Water" })).not.toBeInTheDocument();
+  });
+
+  it("shows a helpful empty state without ranking every location", () => {
+    render(<App />);
+
+    addCriterion(/Distance to forest/);
+    fireEvent.click(screen.getByRole("button", { name: "Remove Forest criterion" }));
+
+    expect(screen.getByText("Start by adding the things that matter to you.")).toBeVisible();
+    expect(screen.getByText("Your match ranking will appear here.")).toBeVisible();
+    expect(screen.queryByRole("list", { name: "Ranked top matches" })).not.toBeInTheDocument();
+    expect(screen.getByText("Add criteria to begin")).toBeVisible();
+    expect(screen.queryByText(/overall match/)).not.toBeInTheDocument();
   });
 
   it("shows explainable details for a selected match", () => {
     render(<App />);
 
+    addCriterion(/Distance to forest/);
     fireEvent.click(screen.getByRole("button", { name: /Białowieża/ }));
 
     expect(screen.getByRole("heading", { level: 3, name: "Białowieża" })).toBeInTheDocument();
@@ -177,6 +271,7 @@ describe("App", () => {
   it("updates criterion visualizations when the selected location changes", () => {
     render(<App />);
 
+    addCriterion(/Distance to forest/);
     fireEvent.click(screen.getByRole("button", { name: /Białowieża/ }));
     const forestHeading = screen.getByRole("heading", { level: 5, name: "Distance to forest" });
     const forestVisualization = forestHeading.closest("figure");
@@ -187,14 +282,32 @@ describe("App", () => {
 
     expect(within(forestVisualization).getByText("0.1 km", { selector: "span" })).toBeVisible();
 
-    fireEvent.click(screen.getByRole("button", { name: /Kilpisjärvi/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Select Geiranger from map" }));
 
-    expect(within(forestVisualization).getByText("0.4 km", { selector: "span" })).toBeVisible();
+    expect(within(forestVisualization).getByText("0.2 km", { selector: "span" })).toBeVisible();
+  });
+
+  it("removes inactive criterion evaluations while retaining informational climate", () => {
+    render(<App />);
+
+    addCriterion(/Distance to forest/);
+    addCriterion(/Distance to grocery store/);
+    fireEvent.click(screen.getByRole("button", { name: /Białowieża/ }));
+    expect(screen.getByRole("heading", { level: 5, name: "Distance to forest" })).toBeVisible();
+    expect(screen.getByRole("heading", { level: 4, name: "Yearly climate" })).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove Forest criterion" }));
+
+    expect(
+      screen.queryByRole("heading", { level: 5, name: "Distance to forest" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 4, name: "Yearly climate" })).toBeVisible();
   });
 
   it("synchronizes a map selection with location details", () => {
     render(<App />);
 
+    addCriterion(/Distance to airport/);
     fireEvent.click(screen.getByRole("button", { name: "Select Geiranger from map" }));
 
     expect(screen.getByRole("heading", { level: 3, name: "Geiranger" })).toBeInTheDocument();
@@ -205,6 +318,8 @@ describe("App", () => {
   it("keeps the selected location when it becomes excluded", () => {
     render(<App />);
 
+    addCriterion(/Distance to forest/);
+    addCriterion(/Distance to airport/);
     fireEvent.click(screen.getByRole("button", { name: /Białowieża/ }));
     fireEvent.change(within(getCriterionGroup("Airport")).getByLabelText("Value"), {
       target: { value: "200" },

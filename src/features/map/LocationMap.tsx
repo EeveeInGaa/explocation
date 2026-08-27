@@ -30,6 +30,7 @@ export type LocationMapProps = Readonly<{
   matches: readonly LocationMatch[];
   topMatches: readonly LocationMatch[];
   selectedLocationId: string | null;
+  hasActiveCriteria: boolean;
   onSelect: (locationId: string) => void;
 }>;
 
@@ -103,6 +104,8 @@ function addLocationLayers(
     paint: {
       "circle-color": [
         "case",
+        ["==", ["get", "searchActive"], false],
+        "#78716c",
         ["get", "selected"],
         "#f59e0b",
         [">", ["get", "rank"], 0],
@@ -111,11 +114,22 @@ function addLocationLayers(
         "#4d7c0f",
         "#78716c",
       ],
-      "circle-opacity": ["case", ["get", "selected"], 1, ["get", "qualified"], 0.94, 0.42],
+      "circle-opacity": [
+        "case",
+        ["==", ["get", "searchActive"], false],
+        0.72,
+        ["get", "selected"],
+        1,
+        ["get", "qualified"],
+        0.94,
+        0.42,
+      ],
       "circle-radius": [
         "case",
         ["get", "selected"],
         12,
+        ["==", ["get", "searchActive"], false],
+        6,
         ["boolean", ["feature-state", "hover"], false],
         11,
         [">", ["get", "rank"], 0],
@@ -191,6 +205,7 @@ export function LocationMap({
   matches,
   topMatches,
   selectedLocationId,
+  hasActiveCriteria,
   onSelect,
 }: LocationMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -199,8 +214,9 @@ export function LocationMap({
   const hoveredLocationIdRef = useRef<string | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const featureCollection = useMemo(
-    () => toLocationMapFeatureCollection(matches, topMatches, selectedLocationId),
-    [matches, topMatches, selectedLocationId],
+    () =>
+      toLocationMapFeatureCollection(matches, topMatches, selectedLocationId, hasActiveCriteria),
+    [matches, topMatches, selectedLocationId, hasActiveCriteria],
   );
   const latestFeatureCollectionRef = useRef(featureCollection);
   latestFeatureCollectionRef.current = featureCollection;
@@ -331,39 +347,53 @@ export function LocationMap({
           </h2>
           <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
             {isMapReady
-              ? `${matches.length} prepared locations · Select a point for details`
+              ? hasActiveCriteria
+                ? `${matches.length} prepared locations · Select a point for details`
+                : `${matches.length} prepared locations · Add criteria to rank`
               : "Loading map…"}
           </p>
         </div>
         <ul className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-stone-600 dark:text-stone-300">
-          <li className="flex items-center gap-2">
-            <span
-              aria-hidden="true"
-              className="size-3 rounded-full bg-cyan-700 ring-2 ring-white"
-            />
-            Top 3
-          </li>
-          <li className="flex items-center gap-2">
-            <span
-              aria-hidden="true"
-              className="size-2.5 rounded-full bg-lime-700 ring-1 ring-white"
-            />
-            Qualified
-          </li>
-          <li className="flex items-center gap-2">
-            <span
-              aria-hidden="true"
-              className="size-2 rounded-full bg-stone-500 opacity-50 ring-1 ring-white"
-            />
-            Excluded
-          </li>
-          <li className="flex items-center gap-2">
-            <span
-              aria-hidden="true"
-              className="size-3 rounded-full bg-amber-500 ring-2 ring-stone-900"
-            />
-            Selected
-          </li>
+          {!hasActiveCriteria ? (
+            <li className="flex items-center gap-2">
+              <span
+                aria-hidden="true"
+                className="size-2 rounded-full bg-stone-500 opacity-70 ring-1 ring-white"
+              />
+              Prepared location — add criteria to rank
+            </li>
+          ) : (
+            <>
+              <li className="flex items-center gap-2">
+                <span
+                  aria-hidden="true"
+                  className="size-3 rounded-full bg-cyan-700 ring-2 ring-white"
+                />
+                Top 3
+              </li>
+              <li className="flex items-center gap-2">
+                <span
+                  aria-hidden="true"
+                  className="size-2.5 rounded-full bg-lime-700 ring-1 ring-white"
+                />
+                Qualified
+              </li>
+              <li className="flex items-center gap-2">
+                <span
+                  aria-hidden="true"
+                  className="size-2 rounded-full bg-stone-500 opacity-50 ring-1 ring-white"
+                />
+                Excluded
+              </li>
+              <li className="flex items-center gap-2">
+                <span
+                  aria-hidden="true"
+                  className="size-3 rounded-full bg-amber-500 ring-2 ring-stone-900"
+                />
+                Selected
+              </li>
+            </>
+          )}
         </ul>
       </div>
 
@@ -372,10 +402,9 @@ export function LocationMap({
         className="h-112 w-full overflow-hidden rounded-sm border border-stone-400 bg-stone-200 shadow-[0_1px_0_rgba(28,25,23,0.08)] sm:h-144 dark:border-stone-600 dark:bg-stone-800"
       />
       <p id="location-map-description" className="sr-only">
-        Interactive map of all prepared prototype locations. Top matches, qualified locations,
-        excluded locations, and the selected location use different sizes, outlines, labels, and
-        emphasis. Select a point to show its location details. The same results remain available in
-        the lists and details on this page.
+        {hasActiveCriteria
+          ? "Interactive map of all prepared prototype locations. Top matches, qualified locations, excluded locations, and the selected location use different sizes, outlines, labels, and emphasis. Select a point to show its location details. The same results remain available in the lists and details on this page."
+          : "Neutral map of all prepared prototype locations. Add at least one criterion to calculate and rank matches."}
       </p>
     </section>
   );

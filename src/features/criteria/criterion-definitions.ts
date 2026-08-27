@@ -3,6 +3,7 @@ import {
   type CriterionDefinition,
   type CriterionId,
   constraintTypes,
+  criterionIds,
 } from "../../types/criterion";
 
 export const categoryLabels: Readonly<Record<CriterionCategory, string>> = {
@@ -63,3 +64,8 @@ export const criterionDefinitions: Readonly<Record<CriterionId, CriterionDefinit
     supportedConstraintTypes: constraintTypes,
   },
 };
+
+/** Ordered catalog consumed by criterion-browsing interfaces. */
+export const criterionCatalog: readonly CriterionDefinition[] = criterionIds.map(
+  (criterionId) => criterionDefinitions[criterionId],
+);

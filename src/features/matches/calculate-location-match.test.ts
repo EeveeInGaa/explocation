@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { defaultSearchProfile } from "../../data/default-search-profile";
 import { preparedPrototypeLocations } from "../../data/locations";
 import { createTestLocation } from "../../test/location-fixture";
 import type { ConfiguredCriterion } from "../../types/criterion";
@@ -117,19 +116,34 @@ describe("overall location matches", () => {
       throw new Error("Expected Hanko in the prepared prototype dataset.");
     }
 
-    const match = calculateLocationMatch(location, defaultSearchProfile);
+    const profile: readonly ConfiguredCriterion[] = [
+      {
+        criterionId: "forestDistance",
+        priority: "preferred",
+        constraint: { type: "maximum", threshold: 1 },
+      },
+      {
+        criterionId: "groceryDistance",
+        priority: "important",
+        constraint: { type: "maximum", threshold: 15 },
+      },
+      {
+        criterionId: "airportDistance",
+        priority: "required",
+        constraint: { type: "minimum", threshold: 100 },
+      },
+    ];
+    const match = calculateLocationMatch(location, profile);
 
     expect(match.qualified).toBe(true);
     expect(match.allPreferencesSatisfied).toBe(true);
     expect(match.score).toBeGreaterThan(0);
     expect(match.score).toBeLessThanOrEqual(1);
-    expect(match.evaluations).toHaveLength(6);
+    expect(match.evaluations).toHaveLength(3);
     expect(match.categoryScores.map(({ category }) => category)).toEqual([
       "nature",
-      "outdoor",
       "services",
       "mobility",
-      "climate",
     ]);
     expect(match.evaluations).toEqual(
       expect.arrayContaining([
@@ -141,5 +155,61 @@ describe("overall location matches", () => {
         }),
       ]),
     );
+  });
+
+  it("evaluates only active criteria and omits inactive categories", () => {
+    const location = createTestLocation("active-only", {
+      forestDistance: 0,
+      waterDistance: 100,
+      hikingTrailDistance: 100,
+      summerAverageTemperature: 40,
+    });
+    const profile: readonly ConfiguredCriterion[] = [
+      {
+        criterionId: "forestDistance",
+        priority: "preferred",
+        constraint: { type: "maximum", threshold: 1 },
+      },
+    ];
+
+    const match = calculateLocationMatch(location, profile);
+
+    expect(match.qualified).toBe(true);
+    expect(match.score).toBe(1);
+    expect(match.evaluations.map(({ criterionId }) => criterionId)).toEqual(["forestDistance"]);
+    expect(match.categoryScores).toEqual([
+      { category: "nature", score: 1, criterionIds: ["forestDistance"] },
+    ]);
+  });
+
+  it("does not apply an inactive required criterion", () => {
+    const location = createTestLocation("inactive-required", { airportDistance: 0 });
+    const profile: readonly ConfiguredCriterion[] = [
+      {
+        criterionId: "forestDistance",
+        priority: "preferred",
+        constraint: { type: "maximum", threshold: 1 },
+      },
+    ];
+
+    const match = calculateLocationMatch(location, profile);
+
+    expect(match.qualified).toBe(true);
+    expect(match.failedRequiredCriteria).toEqual([]);
+    expect(match.categoryScores.some(({ category }) => category === "mobility")).toBe(false);
+  });
+
+  it("handles an empty profile without a misleading complete match", () => {
+    const match = calculateLocationMatch(createTestLocation("empty-profile"), []);
+
+    expect(match).toMatchObject({
+      qualified: true,
+      allPreferencesSatisfied: false,
+      score: 0,
+      evaluations: [],
+      categoryScores: [],
+      failedRequiredCriteria: [],
+    });
+    expect(Number.isFinite(match.score)).toBe(true);
   });
 });
